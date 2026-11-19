@@ -1,0 +1,7 @@
+pandas
+psutil
+selenium
+undetected-chromedriver
+pyperclip
+requests
+openpyxl
