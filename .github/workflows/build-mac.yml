@@ -1,0 +1,78 @@
+
+name: Build Mac Application
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+
+          python -m pip install pyinstaller
+
+      - name: Build Mac Terminal Executable
+        run: |
+          mkdir -p dist/terminal build/terminal spec/terminal
+
+          python -m PyInstaller \
+            --clean \
+            --noconfirm \
+            --onefile \
+            --console \
+            --name MyBot \
+            --distpath dist/terminal \
+            --workpath build/terminal \
+            --specpath spec/terminal \
+            main.py
+
+      - name: Build Mac APP
+        run: |
+          mkdir -p dist/app build/app spec/app
+
+          python -m PyInstaller \
+            --clean \
+            --noconfirm \
+            --onedir \
+            --windowed \
+            --name MyBot \
+            --distpath dist/app \
+            --workpath build/app \
+            --specpath spec/app \
+            main.py
+
+      - name: Package Mac Applications
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            dist/app/MyBot.app MyBot-macOS-app.zip
+
+          ditto -c -k --sequesterRsrc --keepParent \
+            dist/terminal/MyBot MyBot-macOS-terminal.zip
+
+      - name: Upload Build Files
+        uses: actions/upload-artifact@v7
+        with:
+          name: MyBot-macOS
+          path: |
+            MyBot-macOS-app.zip
+            MyBot-macOS-terminal.zip
+          retention-days: 30
